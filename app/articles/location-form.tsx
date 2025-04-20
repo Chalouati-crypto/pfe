@@ -1,19 +1,26 @@
 "use client";
-import { Controller, useFormContext } from "react-hook-form";
-
-import { Select } from "@radix-ui/react-select";
+import { useFormContext } from "react-hook-form";
 import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { arrondissement } from "@/types/articles-schema";
+import { Input } from "@/components/ui/input";
 
-export default function Location() {
+export default function Location({ isEditing }: { isEditing: boolean }) {
   const { control, watch, setValue } = useFormContext();
-  const selectedDistrict = watch("location.arrondissement");
-  const selectedZone = watch("location.zone");
+  const selectedDistrict = watch("arrondissement");
+  const selectedZone = watch("zone");
 
   // Get zones based on the selected district
   const zones =
@@ -23,94 +30,125 @@ export default function Location() {
   const streets = zones.find((z) => z.name === selectedZone)?.streets || [];
 
   return (
-    <fieldset className="space-y-4">
-      <legend className="text-lg font-semibold">Localisation</legend>
-      <Controller
-        name="location.arrondissement"
-        control={control}
-        render={({ field }) => (
-          <div>
-            <label>Arrondissement</label>
-            <Select
-              value={field.value}
-              onValueChange={(value) => {
-                field.onChange(value); // Update the district field
-                setValue("location.zone", ""); // Reset zone when district changes
-                setValue("location.rue", ""); // Reset rue when district changes
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sélectionner un arrondissement" />
-              </SelectTrigger>
-              <SelectContent>
-                {arrondissement.map((district) => (
-                  <SelectItem key={district.name} value={district.name}>
-                    {district.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      />
+    <div>
+      <h2 className="text-xl font-semibold text-primary mb-4">Localisation</h2>
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <FormField
+            name="arrondissement"
+            control={control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Arrondissement</FormLabel>
+                <Select
+                  disabled={isEditing}
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setValue("zone", "");
+                    setValue("rue", "");
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un arrondissement" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {arrondissement.map((district) => (
+                      <SelectItem key={district.name} value={district.name}>
+                        {district.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      {/* Zone Select */}
-      <Controller
-        name="location.zone"
-        control={control}
-        render={({ field }) => (
-          <div>
-            <label>Zone</label>
-            <Select
-              value={field.value}
-              onValueChange={(value) => {
-                field.onChange(value); // Update the zone field
-                setValue("location.rue", ""); // Reset rue when zone changes
-              }}
-              disabled={!selectedDistrict} // Disable if no district is selected
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sélectionner une zone" />
-              </SelectTrigger>
-              <SelectContent>
-                {zones.map((zone) => (
-                  <SelectItem key={zone.name} value={zone.name}>
-                    {zone.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      />
+          <FormField
+            name="zone"
+            control={control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Zone</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setValue("rue", "");
+                  }}
+                  disabled={!selectedDistrict || isEditing}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une zone" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {zones.map((zone) => (
+                      <SelectItem key={zone.name} value={zone.name}>
+                        {zone.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      {/* Rue Select */}
-      <Controller
-        name="location.rue"
-        control={control}
-        render={({ field }) => (
-          <div>
-            <label>Rue</label>
-            <Select
-              value={field.value}
-              onValueChange={field.onChange}
-              disabled={!selectedZone} // Disable if no zone is selected
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sélectionner une rue" />
-              </SelectTrigger>
-              <SelectContent>
-                {streets.map((street) => (
-                  <SelectItem key={street} value={street}>
-                    {street}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      />
-      {/* Input fields for Arrondissement, Zone, and Rue */}
-    </fieldset>
+          <FormField
+            name="rue"
+            control={control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Rue</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={!selectedZone || isEditing}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une rue" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {streets.map((street) => (
+                      <SelectItem key={street} value={street}>
+                        {street}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="number"
+            control={control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Numero de la voie</FormLabel>
+                <FormControl>
+                  <Input
+                    disabled={isEditing}
+                    {...field}
+                    type="number"
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    onBlur={field.onBlur}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+    </div>
   );
 }

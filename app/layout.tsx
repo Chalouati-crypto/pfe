@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import LayoutWrapper from "@/components/layout-wrapper";
 import { Toaster } from "sonner";
+import ArticleNoticeProvider from "./articles/article-notice-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,12 +31,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>
-          <LayoutWrapper>
-            <Toaster richColors />
-            {children}
-          </LayoutWrapper>
-        </SessionProvider>
+        <ArticleNoticeProvider>
+          <SessionProvider>
+            <LayoutWrapper>
+              <Toaster richColors />
+              {children}
+            </LayoutWrapper>
+          </SessionProvider>
+        </ArticleNoticeProvider>
       </body>
     </html>
   );

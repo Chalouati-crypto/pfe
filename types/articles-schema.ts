@@ -4,30 +4,7 @@ import { z } from "zod";
 export const propertyTypeEnum = z.enum(["bati", "non bati"]);
 
 // Enum for urban density
-const densityEnum = z.enum(["haute", "moyenne", "basse"]).nullable().optional();
-type DensityType = z.infer<typeof densityEnum>;
-export type ArticleResult = {
-  id: number;
-  typeDePropriete: "bati" | "non bati";
-  dateDebutImposition: string;
-  arrondissement: string;
-  zone: string;
-  rue: string;
-  cin: string;
-  nom: string;
-  prenom: string;
-  email: string;
-  adresse: string;
-  telephone: string;
 
-  // Optional bati_details
-  surfaceTotale?: string | null;
-  surfaceCouverte?: string | null;
-  services?: ServiceType[] | null;
-  densiteUrbain?: DensityType | null;
-  autreService?: "" | null;
-  taxe?: string | null;
-};
 export type ServiceType = {
   id: string;
   label?: string;
@@ -83,50 +60,54 @@ export const servicesSchema = z.array(
   })
 );
 
-// **Main Zod Schema**
-export const articlesSchema = z.object({
-  general: z.object({
-    id: z.number().int().positive().optional(),
-    typeDePropriete: propertyTypeEnum,
-    dateDebutImposition: z.preprocess((arg) => {
-      if (arg instanceof Date) {
-        // Convert Date object to ISO string and extract the date portion
-        return arg.toISOString().split("T")[0];
-      }
-      return arg;
-    }, z.string()),
-  }),
-  location: z.object({
-    arrondissement: z.string().min(1).max(100),
-    zone: z.string().min(1).max(100),
-    rue: z.string().min(1).max(100),
-  }),
-  owner: z.object({
-    cin: z.string().min(1).max(50),
-    nom: z.string().min(1).max(100),
-    prenom: z.string().min(1).max(100),
-    email: z.string().email().max(100),
-    adresse: z.string().min(1).max(255),
-    telephone: z.string().min(1).max(50),
-  }),
-  bati_details: z
-    .object({
-      surfaceTotale: z.preprocess(
-        (val) => (typeof val === "string" ? Number(val) : val),
-        z.number().optional().nullable()
-      ),
-      surfaceCouverte: z.preprocess(
-        (val) => (typeof val === "string" ? Number(val) : val),
-        z.number().optional().nullable()
-      ),
-      services: servicesSchema.optional(),
-      densiteUrbain: densityEnum.optional(),
-      autreService: z.preprocess(
-        (val) => (Array.isArray(val) ? val.join(",") : val),
-        z.string().optional().nullable()
-      ),
+// Create enum schemas
+const PropertyTypeEnum = z.enum(["bati", "non bati"]);
+const DensityEnum = z.enum(["haute", "moyenne", "basse"]);
+const OppsitionStatusEnum = z.enum([
+  "active",
+  "opposition_pending",
+  "opposition_approved",
+  "opposition_refused",
+]);
 
-      taxe: z.string().optional().nullable(),
-    })
+export const articleSchema = z.object({
+  // General Section
+  id: z.number().optional(),
+  typeDePropriete: PropertyTypeEnum,
+  dateDebutImposition: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "Date must be in YYYY-MM-DD format",
+  }),
+  surfaceTotale: z.coerce.number().optional(),
+  densiteUrbain: DensityEnum.optional(),
+
+  // Location Section
+  arrondissement: z.string().max(100).nonempty(),
+  zone: z.string().max(100).nonempty(),
+  rue: z.string().max(100).nonempty(),
+  number: z.number(),
+  // Owner Section
+  cin: z.string().max(50).nonempty(),
+  nom: z.string().max(100).nonempty(),
+  prenom: z.string().max(100).nonempty(),
+  email: z.string().email().max(100).nonempty(),
+  adresse: z.string().max(255).nonempty(),
+  telephone: z.string().max(50).nonempty(),
+  taxe: z.coerce.number().optional(),
+
+  // Bâti Details (Optional)
+  surfaceCouverte: z.coerce.number().optional(),
+  services: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string().optional(),
+      })
+    )
     .optional(),
+  autreService: z.string().optional(),
+  archive: z.boolean().optional(),
+  status: OppsitionStatusEnum.default("active"),
 });
+
+export type Article = z.infer<typeof articleSchema>;
+export type OppositionStatus = z.infer<typeof OppsitionStatusEnum>;

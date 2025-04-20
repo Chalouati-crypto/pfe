@@ -7,4 +7,5 @@ export const LoginSchema = z.object({
   password: z.string().min(8, {
     message: "password is required",
   }),
+  captchaToken: z.string().optional(),
 });

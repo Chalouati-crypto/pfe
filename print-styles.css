@@ -1,0 +1,44 @@
+@media print {
+  /* Hide everything except the content to be printed */
+  body * {
+    visibility: hidden;
+  }
+
+  /* The specific content to be printed */
+  .print-content,
+  .print-content * {
+    visibility: visible;
+  }
+
+  /* Position the content at the top of the page */
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* Remove shadows and adjust borders for better printing */
+  .print-content .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  .print-content .border {
+    border: 1px solid #ddd !important;
+  }
+
+  /* Ensure text is black for better printing */
+  .print-content {
+    color: black !important;
+  }
+
+  /* Ensure backgrounds are white or very light */
+  .print-content .bg-primary\/10 {
+    background-color: #f9f9f9 !important;
+  }
+
+  /* Adjust page margins */
+  @page {
+    margin: 0.5cm;
+  }
+}

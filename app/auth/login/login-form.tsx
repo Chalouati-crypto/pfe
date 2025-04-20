@@ -43,7 +43,7 @@ export function LoginForm({
       if (data?.error) {
         setSuccess("");
         setError(data.error);
-        toast("Vous vous êtes connecté avec succès.");
+        toast.error(data.error);
       }
       if (data?.success) {
         setError("");

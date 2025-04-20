@@ -29,7 +29,8 @@ export const users = pgTable("user", {
   email: text("email").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
-  password: text("password").notNull(), // Ensure password exists in schema
+  password: text("password"), // Ensure password exists in schema
+  role: text("role").default("user"),
 });
 
 export const accounts = pgTable(
@@ -109,6 +110,12 @@ export const propertyTypeEnum = pgEnum("type_de_propriete", [
   "bati",
   "non bati",
 ]);
+export const oppsitionStatusEnum = pgEnum("status", [
+  "active",
+  "opposition_pending",
+  "opposition_approved",
+  "opposition_refused",
+]);
 
 export const densityEnum = pgEnum("densite_urbain", [
   "haute",
@@ -121,12 +128,14 @@ export const articles = pgTable("articles", {
   id: serial("id").primaryKey(),
   typeDePropriete: propertyTypeEnum("type_de_propriete").notNull(),
   dateDebutImposition: varchar("date_debut_imposition").notNull(),
+  surfaceTotale: numeric("surface_totale"),
+  densiteUrbain: densityEnum("densite_urbain"),
 
   // Location Section
   arrondissement: varchar("arrondissement", { length: 100 }).notNull(),
   zone: varchar("zone", { length: 100 }).notNull(),
   rue: varchar("rue", { length: 100 }).notNull(),
-
+  number: numeric("number").notNull(),
   // Owner Section
   cin: varchar("cin", { length: 50 }).notNull(),
   nom: varchar("nom", { length: 100 }).notNull(),
@@ -134,12 +143,13 @@ export const articles = pgTable("articles", {
   email: varchar("email", { length: 100 }).notNull(),
   adresse: varchar("adresse", { length: 255 }).notNull(),
   telephone: varchar("telephone", { length: 50 }).notNull(),
+  taxe: numeric("taxe"),
 
   // Bâti Details (Optional)
-  surfaceTotale: numeric("surface_totale"),
   surfaceCouverte: numeric("surface_couverte"),
   services: jsonb("services").$type<Array<{ id: string; label?: string }>>(),
-  densiteUrbain: densityEnum("densite_urbain"),
   autreService: text("autre_service"),
-  taxe: numeric("taxe"),
+
+  archive: boolean("archive").default(false),
+  status: oppsitionStatusEnum("status").default("active"),
 });

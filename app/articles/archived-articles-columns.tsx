@@ -1,8 +1,8 @@
 "use client";
 
-import { articlesSchema } from "@/types/articles-schema";
+import { Article, articleSchema } from "@/types/articles-schema";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { Archive, Book, Edit, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,48 +13,59 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
-import { deleteArticle } from "@/server/actions/articles";
+import { restoreArticle } from "@/server/actions/articles";
 import { toast } from "sonner";
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-async function deleteArticleWrapper(article: number) {
-  const id = article.general.id;
-  const { data } = await deleteArticle({ id });
+async function restoreArticleWrapper(article: number) {
+  const id = article.id;
+  const { data } = await restoreArticle({ id });
   if (!data) return new Error("no data found");
   if (data.success) toast.success(data.success);
   if (data.error) toast.error(data.error);
 }
 
 export const columns = (
-  handleEdit: (article: any) => void
-): ColumnDef<typeof articlesSchema>[] => [
+  openNotice: (article: Article) => void
+): ColumnDef<typeof articleSchema>[] => [
   {
-    accessorKey: "general.id",
+    accessorKey: "id",
     header: "id",
   },
   {
-    accessorKey: "general.typeDePropriete",
+    accessorKey: "typeDePropriete",
     header: `Type de propriete`,
   },
   {
-    accessorKey: "location.arrondissement",
+    accessorKey: "arrondissement",
     header: `Arrondissement`,
   },
 
   {
-    accessorKey: "owner.fullName",
+    accessorKey: "fullName",
     header: `Nom & Prénom`,
-    cell: ({ row }) => `${row.original.owner.nom} ${row.original.owner.prenom}`,
+    cell: ({ row }) => `${row.original.nom} ${row.original.prenom}`,
   },
   {
-    accessorKey: "owner.cin",
+    id: "cin", // 👈 this is what you’ll use in getColumn("cin")
     header: `CIN`,
+    accessorFn: (row) => row.cin,
   },
   {
-    accessorKey: "general.dateDebutImposition",
-    header: `Date de Début d'Imposition`,
+    accessorKey: "dateDebutImposition",
+
+    header: ({ column }) => {
+      return (
+        <span
+          className="cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date de Début d&apos;Imposition
+        </span>
+      );
+    },
     cell: (row) => {
-      const date = new Date(row.getValue("general.dateDebutImposition"));
+      const date = new Date(row.getValue("dateDebutImposition"));
       return format(date, "dd/MM/yyyy"); // Format as "day/month/year"
     },
   },
@@ -62,7 +73,6 @@ export const columns = (
   {
     id: "actions",
     cell: ({ row }) => {
-      console.log(row.original, "this is row.original");
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild className="cursor-pointer">
@@ -74,18 +84,18 @@ export const columns = (
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-            <DropdownMenuItem
-              onClick={() => handleEdit(row.original)} // ✅ Pass clicked row
-              className="cursor-pointer"
-            >
-              Modifier l&apos;article
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => deleteArticleWrapper(row.original)}
+              onClick={() => restoreArticleWrapper(row.original)}
               className="cursor-pointer"
             >
-              Suprimmer l&apos;article
+              <Archive /> Restaurer l&apos;article
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openNotice(row.original)}
+              className="cursor-pointer"
+            >
+              <Book /> Voir Avis
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

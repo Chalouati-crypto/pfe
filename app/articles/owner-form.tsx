@@ -9,35 +9,44 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-export default function Owner() {
+export default function Owner({ isEditing }: { isEditing: boolean }) {
   const { control } = useFormContext();
 
-  return (
-    <fieldset className="space-y-2">
-      <legend className="text-lg font-semibold">
-        Informations du propriétaire
-      </legend>
+  const fields = [
+    { name: "cin", label: "CIN", type: "text" },
+    { name: "nom", label: "Nom", type: "text" },
+    { name: "prenom", label: "Prénom", type: "text" },
+    { name: "email", label: "Email", type: "email" },
+    { name: "adresse", label: "Adresse", type: "text" },
+    { name: "telephone", label: "Téléphone", type: "tel" },
+  ];
 
-      {["cin", "nom", "prenom", "email", "adresse", "telephone"].map(
-        (fieldName) => (
+  return (
+    <div>
+      <h2 className="text-xl font-semibold text-primary mb-4">
+        Informations du propriétaire
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {fields.map((field) => (
           <FormField
-            key={fieldName}
+            key={field.name}
             control={control}
-            name={`owner.${fieldName}`} // Fixed to match the schema
-            render={({ field }) => (
+            disabled={isEditing}
+            name={field.name}
+            render={({ field: formField }) => (
               <FormItem>
-                <FormLabel>
-                  {fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
-                </FormLabel>
-                <FormControl>
-                  <Input {...field} value={field.value ?? ""} />
-                </FormControl>
+                <FormLabel>{field.label}</FormLabel>
+                <Input
+                  {...formField}
+                  type={field.type}
+                  value={formField.value ?? ""}
+                />
                 <FormMessage />
               </FormItem>
             )}
           />
-        )
-      )}
-    </fieldset>
+        ))}
+      </div>
+    </div>
   );
 }

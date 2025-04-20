@@ -1,16 +1,14 @@
 import FormDialog from "@/components/form-dialog";
 import { TypographyH1 } from "@/components/ui/heading-1";
 
-import { formatArticleForForm } from "@/lib/utils";
 import { getArticles } from "@/server/actions/articles";
 import AddEditArticle from "./add-edit-article";
 import ArticlesTable from "./articles-table";
 
 export default async function Articles() {
   const articles = await getArticles();
-  const formattedArticles = articles.map((article) => {
-    return formatArticleForForm(article);
-  });
+
+  console.log(articles);
 
   return (
     <div className="grid gap-12 mt-12">
@@ -23,7 +21,7 @@ export default async function Articles() {
           <AddEditArticle />
         </FormDialog>
       </div>
-      <ArticlesTable articles={formattedArticles} />
+      <ArticlesTable articles={articles} />
     </div>
   );
 }

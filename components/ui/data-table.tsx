@@ -6,6 +6,10 @@ import {
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
+  ColumnFiltersState,
+  getFilteredRowModel,
+  getSortedRowModel,
+  SortingState,
 } from "@tanstack/react-table";
 
 import {
@@ -18,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "./button";
 import { useState } from "react";
+import { Input } from "./input";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -33,19 +38,38 @@ export function DataTable<TData, TValue>({
     pageIndex: 0,
     pageSize: FIXED_PAGE_SIZE, // Use the fixed page size here
   });
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: setPagination,
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
     state: {
       pagination,
+      columnFilters,
+      sorting,
     },
   });
 
   return (
     <div>
+      <div className="flex items-center py-4">
+        <Input
+          placeholder="Filter cins..."
+          value={(table.getColumn("cin")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("cin")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
+      </div>
       <div className="border rounded-md">
         <Table>
           <TableHeader>
