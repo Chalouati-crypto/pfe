@@ -1,6 +1,4 @@
 "use client";
-
-import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,16 +7,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useReactToPrint } from "react-to-print";
 import { Download, Printer, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Article, ServiceType } from "@/types/articles-schema";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PdfDocument } from "./pdf-document";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
   try {
     return format(new Date(dateString), "dd MMMM yyyy", { locale: fr });
   } catch (error) {
+    console.error("Error formatting date:", error);
     return dateString;
   }
 };
@@ -67,17 +68,10 @@ export default function ArticleNotice({
   onBack,
   isNew = true,
 }: {
-  article: any;
+  article: Article;
   onBack: () => void;
   isNew?: boolean;
 }) {
-  const printRef = useRef<HTMLDivElement>(null);
-
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `Avis_Fiscal_${article.cin || ""}`,
-  });
-
   const servicesArray = Array.isArray(article.services) ? article.services : [];
   const hasOtherService =
     article.autreService && article.autreService.length > 0;
@@ -94,22 +88,25 @@ export default function ArticleNotice({
           Retour
         </Button>
         <div className="space-x-2">
-          <Button
-            variant="outline"
-            onClick={handlePrint}
-            className="flex items-center gap-2"
-          >
+          <Button variant="outline" className="flex items-center gap-2">
             <Printer className="h-4 w-4" />
             Imprimer
           </Button>
-          <Button onClick={handlePrint} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Télécharger PDF
-          </Button>
+          <PDFDownloadLink
+            document={<PdfDocument article={article} />}
+            fileName="avis.pdf"
+          >
+            {({ loading }) => (
+              <Button disabled={loading}>
+                <Download className="h-4 w-4" />
+                {loading ? "Generating..." : "Download PDF"}
+              </Button>
+            )}
+          </PDFDownloadLink>
         </div>
       </div>
 
-      <div ref={printRef} className="bg-white p-8 rounded-lg border shadow-sm">
+      <div className="bg-white p-8 rounded-lg border shadow-sm">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-primary">
             Avis d&apos;Imposition
@@ -241,8 +238,8 @@ export default function ArticleNotice({
                   </p>
                   <p className="font-medium">{article.surfaceCouverte} m²</p>
                   <p className="text-xs text-muted-foreground">
-                    {getSurfaceCategory(article.surfaceCouverte)} (Prix de
-                    référence: {getPriceReference(article.surfaceCouverte)} DH)
+                    {getSurfaceCategory(article.surfaceCouverte!)} (Prix de
+                    référence: {getPriceReference(article.surfaceCouverte!)} DH)
                   </p>
                 </div>
               </div>
@@ -252,7 +249,7 @@ export default function ArticleNotice({
                   Services
                 </p>
                 <div className="mt-1 flex flex-wrap gap-2">
-                  {servicesArray.map((service: any, index: number) => (
+                  {servicesArray.map((service: ServiceType, index: number) => (
                     <span
                       key={index}
                       className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"

@@ -135,7 +135,8 @@ export const articles = pgTable("articles", {
   arrondissement: varchar("arrondissement", { length: 100 }).notNull(),
   zone: varchar("zone", { length: 100 }).notNull(),
   rue: varchar("rue", { length: 100 }).notNull(),
-  number: numeric("number").notNull(),
+  x: numeric("latitude").notNull(),
+  y: numeric("longitude").notNull(),
   // Owner Section
   cin: varchar("cin", { length: 50 }).notNull(),
   nom: varchar("nom", { length: 100 }).notNull(),

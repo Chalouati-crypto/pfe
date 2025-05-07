@@ -148,7 +148,6 @@ export default function AddEditArticle({
   const defaultDate = formatDateToYYYYMMDD(today);
 
   // Initialize form with either existing article or default values
-  console.log(typeof article?.number);
   const methods = useForm({
     mode: "onChange",
     resolver: zodResolver(articleSchema),
@@ -212,7 +211,9 @@ export default function AddEditArticle({
     autreService,
     setValue,
   ]);
-
+  useEffect(() => {
+    console.log("form errors", errors);
+  }, [errors]);
   // Submit handler
   const onSubmit = (values: z.infer<typeof articleSchema>) => {
     // Only convert taxe to number
@@ -405,7 +406,7 @@ export default function AddEditArticle({
                 </Button>
               )}
 
-            {(activeTab === "4" ||
+            {/* {(activeTab === "4" ||
               (typeDePropriete !== "bati" && activeTab === "3")) && (
               <Button
                 type="submit"
@@ -414,7 +415,7 @@ export default function AddEditArticle({
               >
                 {article ? "Modifier" : "Ajouter"}
               </Button>
-            )}
+            )} */}
           </div>
         </div>
       </form>
