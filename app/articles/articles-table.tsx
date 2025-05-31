@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "./data-table";
 import { z } from "zod";
 import { articleSchema } from "@/types/articles-schema";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { columns as allColumns } from "./all-articles-columns";
 import { columns as opposedColumns } from "./opposed-articles-columns";
 import { columns as archivedColumns } from "./archived-articles-columns";
+import { AddOppositionForm } from "../oppositions/add-opposition";
 export type Article = z.infer<typeof articleSchema>;
 interface ArticlesTableProps {
   articles: Article[];
@@ -23,17 +24,14 @@ export default function ArticlesTable({ articles }: ArticlesTableProps) {
   const [selectedArticle, setSelectedArticle] = useState<Article | undefined>(
     undefined
   );
-  const [editOpen, setEditOpen] = useState(false);
-
+  const [showOppositionForm, setShowOppositionForm] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
-  const handleEdit = (article: Article) => {
-    setSelectedArticle(article); // State update is asynchronous
-    setEditOpen(true);
-  };
-
   const openNotice = useArticleNoticeStore((state) => state.openNotice);
-
+  const openOppositionForm = (article: Article) => {
+    setSelectedArticle(article);
+    setShowOppositionForm(true);
+  };
   const archivedArticles = articles.filter((article) => article.archive);
   const allArticles = articles.filter((article) => !article.archive);
 
@@ -58,14 +56,14 @@ export default function ArticlesTable({ articles }: ArticlesTableProps) {
         <TabsContent value="all">
           <DataTable
             data={allArticles}
-            columns={allColumns(handleEdit, openNotice)}
+            columns={allColumns(openNotice, openOppositionForm)}
           />
         </TabsContent>
 
         <TabsContent value="pending">
           <DataTable
             data={opposedArticles}
-            columns={opposedColumns(handleEdit, openNotice)}
+            columns={opposedColumns(openNotice)}
           />
         </TabsContent>
 
@@ -76,15 +74,22 @@ export default function ArticlesTable({ articles }: ArticlesTableProps) {
           />
         </TabsContent>
       </Tabs>
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="min-w-[50vw] h-[95vh] flex flex-col gap-6">
-          <DialogTitle>Modifier l&apos;article</DialogTitle>
-          <AddEditArticle
-            article={selectedArticle}
-            handleClose={() => setEditOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {
+        <Dialog open={showOppositionForm} onOpenChange={setShowOppositionForm}>
+          <DialogContent className="min-w-[50vw] h-[95vh] flex flex-col gap-6">
+            <DialogTitle>Opposer l&apos;article</DialogTitle>
+            {selectedArticle && (
+              <AddOppositionForm
+                articleId={selectedArticle.id}
+                currentSurfaceCouverte={selectedArticle.surfaceCouverte}
+                currentServices={selectedArticle.services}
+                currentAutreService={selectedArticle.autreService}
+                handleClose={() => setShowOppositionForm(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      }
     </>
   );
 }

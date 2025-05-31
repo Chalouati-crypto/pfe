@@ -12,10 +12,12 @@ export default function FormDialog({
   trigger,
   title,
   children,
+  big = true,
 }: {
   trigger: string;
   title: string;
   children: React.ReactNode;
+  big: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -28,7 +30,9 @@ export default function FormDialog({
           </a>
         </DialogTrigger>
       </DialogHeader>
-      <DialogContent className="min-w-[50vw] h-[95vh] flex flex-col gap-6">
+      <DialogContent
+        className={`${big && "min-w-[50vw] h-[95vh]"} flex flex-col gap-6`}
+      >
         <DialogTitle>{title}</DialogTitle>
         {React.isValidElement(children) &&
           React.cloneElement(children, { handleClose: () => setOpen(false) })}

@@ -1,4 +1,3 @@
-//put this in schema.ts
 import {
   boolean,
   timestamp,
@@ -13,6 +12,8 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core";
 import postgres from "postgres";
+import { relations } from "drizzle-orm";
+
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -30,7 +31,7 @@ export const users = pgTable("user", {
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
   password: text("password"), // Ensure password exists in schema
-  role: text("role").default("user"),
+  role: text("role").default("agent"),
 });
 
 export const accounts = pgTable(
@@ -154,3 +155,84 @@ export const articles = pgTable("articles", {
   archive: boolean("archive").default(false),
   status: oppsitionStatusEnum("status").default("active"),
 });
+
+// New opposition table
+export const oppositions = pgTable("oppositions", {
+  id: serial("id").primaryKey(),
+  articleId: integer("article_id")
+    .notNull()
+    .references(() => articles.id, { onDelete: "cascade" }),
+
+  // The values that can be changed if opposition is approved
+  proposedSurfaceCouverte: numeric("proposed_surface_couverte"),
+  proposedServices:
+    jsonb("proposed_services").$type<Array<{ id: string; label?: string }>>(),
+  proposedAutreService: text("proposed_autre_service"),
+
+  // Opposition metadata
+  status: oppsitionStatusEnum("status").default("opposition_pending"),
+  reason: text("reason").notNull(),
+  submittedBy: text("submitted_by")
+    .notNull()
+    .references(() => users.id),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+
+  // Optional: reviewer information
+  reviewedBy: text("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),
+});
+export const paymentMethodEnum = pgEnum("payment_method", [
+  "cash",
+  "check",
+  "bank_transfer",
+  "credit_card",
+  "other",
+]);
+
+// Payment records table
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  articleId: integer("article_id")
+    .notNull()
+    .references(() => articles.id, { onDelete: "cascade" }),
+  year: integer("year").notNull(),
+  amount: numeric("amount").notNull(),
+  paymentDate: timestamp("payment_date", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  receiptNumber: varchar("receipt_number", { length: 50 }).notNull(),
+  paymentMethod: paymentMethodEnum("payment_method").notNull(),
+  notes: text("notes"),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => users.id),
+});
+// Relations setup
+
+export const articlesRelations = relations(articles, ({ many }) => ({
+  oppositions: many(oppositions),
+  payments: many(payments),
+}));
+
+export const oppositionsRelations = relations(oppositions, ({ one }) => ({
+  article: one(articles, {
+    fields: [oppositions.articleId],
+    references: [articles.id],
+  }),
+  submitter: one(users, {
+    fields: [oppositions.submittedBy],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [oppositions.reviewedBy],
+    references: [users.id],
+  }),
+}));

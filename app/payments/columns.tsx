@@ -2,14 +2,13 @@
 
 import type { Article, articleSchema } from "@/types/articles-schema";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Archive, Book, Edit, MoreHorizontal } from "lucide-react";
+import { Book, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
@@ -27,8 +26,7 @@ async function deleteArticleWrapper(article: Article) {
 }
 
 export const columns = (
-  openNotice: (article: Article) => void,
-  openOppositionForm: (article: Article) => void // New function to handle opening the opposition form
+  handleCompare: (article: Article) => void // New function to handle opening the opposition form
 ): ColumnDef<typeof articleSchema>[] => [
   {
     accessorKey: "id",
@@ -75,6 +73,7 @@ export const columns = (
   {
     id: "actions",
     cell: ({ row }) => {
+      const article: Article = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild className="cursor-pointer">
@@ -85,48 +84,12 @@ export const columns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            {row.original.status === "active" && (
-              <DropdownMenuItem
-                onClick={() => openOppositionForm(row.original)}
-                className="cursor-pointer"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Demander une opposition
-              </DropdownMenuItem>
-            )}
-            {row.original.status === "opposition_pending" && (
-              <DropdownMenuItem disabled className="cursor-pointer">
-                <Edit className="mr-2 h-4 w-4" />
-                Verification en attente
-              </DropdownMenuItem>
-            )}
-            {row.original.status === "opposition_refused" && (
-              <DropdownMenuItem disabled className="cursor-pointer">
-                <Edit className="mr-2 h-4 w-4" />
-                Votre opposition a ete refuse
-              </DropdownMenuItem>
-            )}
-            {row.original.status === "opposition_approved" && (
-              <DropdownMenuItem
-                onClick={() => openOppositionForm(row.original)}
-                className="cursor-pointer"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Demander une nouvelle opposition
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
+
             <DropdownMenuItem
-              onClick={() => deleteArticleWrapper(row.original)}
+              onClick={() => handleCompare(article)}
               className="cursor-pointer"
             >
-              <Archive className="mr-2 h-4 w-4" /> Archiver l&apos;article
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => openNotice(row.original)}
-              className="cursor-pointer"
-            >
-              <Book className="mr-2 h-4 w-4" /> Voir Avis
+              <Book className="mr-2 h-4 w-4" /> Consulter Paiment
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

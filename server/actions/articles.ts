@@ -6,9 +6,21 @@ import { eq } from "drizzle-orm";
 import { actionClient } from "@/lib/safe-actions";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { sendArticleEmail } from "./send-email";
+import { generateArticlePdf } from "@/lib/pdf-generator";
 
 export async function getArticles() {
   return db.select().from(articles);
+}
+export async function getArticleById(input: { id: number }) {
+  console.log("this is the Id of the opposed article", input);
+  const result = await db
+    .select()
+    .from(articles)
+    .where(eq(articles.id, input.id))
+    .limit(1);
+  console.log("this is the found article", result);
+  return result;
 }
 
 export const upsertArticle = actionClient
@@ -112,6 +124,20 @@ export const upsertArticle = actionClient
           .values(updatedArticle)
           .returning();
         revalidatePath("/articles");
+        try {
+          // Generate PDF
+          const pdfBuffer = await generateArticlePdf(result[0]);
+
+          // Send email
+          await sendArticleEmail(
+            result[0].email, // Make sure this field exists in your schema
+            pdfBuffer,
+            result[0].nom
+          );
+        } catch (emailError) {
+          console.error("Email sending failed:", emailError);
+          // Consider adding error handling here
+        }
         return {
           success: true,
           data: result[0],
@@ -126,6 +152,7 @@ export const upsertArticle = actionClient
       };
     }
   });
+
 export const deleteArticle = actionClient
   .schema(z.object({ id: z.number() }))
   .action(async ({ parsedInput: { id } }) => {

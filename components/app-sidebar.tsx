@@ -1,4 +1,12 @@
-import { LayoutDashboard, Pen, User, School } from "lucide-react";
+import {
+  LayoutDashboard,
+  Pen,
+  User,
+  School,
+  Users,
+  StopCircleIcon,
+  FileStack,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -22,6 +30,21 @@ const items = [
     title: "Articles",
     url: "/articles",
     icon: School,
+  },
+  {
+    title: "Users",
+    url: "/users",
+    icon: Users,
+  },
+  {
+    title: "Oppositions",
+    url: "/oppositions",
+    icon: StopCircleIcon,
+  },
+  {
+    title: "Paiments",
+    url: "/payments",
+    icon: FileStack,
   },
 ];
 

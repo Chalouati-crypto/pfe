@@ -30,7 +30,6 @@ async function deleteArticleWrapper(article: number) {
 }
 
 export const columns = (
-  handleEdit: (article: Article) => void,
   openNotice: (article: Article) => void
 ): ColumnDef<typeof articleSchema>[] => [
   {
