@@ -216,23 +216,50 @@ export const payments = pgTable("payments", {
     .references(() => users.id),
 });
 // Relations setup
+// ... existing imports and table definitions ...
 
-export const articlesRelations = relations(articles, ({ many }) => ({
-  oppositions: many(oppositions),
-  payments: many(payments),
-}));
+// Add this paymentsRelations definition
+// export const paymentsRelations = relations(payments, ({ one }) => ({
+//   article: one(articles, {
+//     fields: [payments.articleId],
+//     references: [articles.id],
+//     relationName: "article_payments",
+//   }),
+//   createdByUser: one(users, {
+//     fields: [payments.createdBy],
+//     references: [users.id],
+//     relationName: "payments_creator", // add unique relationName here
+//   }),
+// }));
 
-export const oppositionsRelations = relations(oppositions, ({ one }) => ({
-  article: one(articles, {
-    fields: [oppositions.articleId],
-    references: [articles.id],
-  }),
-  submitter: one(users, {
-    fields: [oppositions.submittedBy],
-    references: [users.id],
-  }),
-  reviewer: one(users, {
-    fields: [oppositions.reviewedBy],
-    references: [users.id],
-  }),
-}));
+// export const articlesRelations = relations(articles, ({ many }) => ({
+//   oppositions: many(oppositions),
+//   payments: many(payments, { relationName: "article_payments" }),
+// }));
+
+// export const oppositionsRelations = relations(oppositions, ({ one }) => ({
+//   article: one(articles, {
+//     fields: [oppositions.articleId],
+//     references: [articles.id],
+//   }),
+//   submitter: one(users, {
+//     fields: [oppositions.submittedBy],
+//     references: [users.id],
+//     relationName: "oppositions_submitter", // unique relation name here
+//   }),
+//   reviewer: one(users, {
+//     fields: [oppositions.reviewedBy],
+//     references: [users.id],
+//     relationName: "oppositions_reviewer", // unique relation name here
+//   }),
+// }));
+
+// export const usersRelations = relations(users, ({ many }) => ({
+//   oppositionsSubmitted: many(oppositions, {
+//     relationName: "oppositions_submitter",
+//   }),
+//   oppositionsReviewed: many(oppositions, {
+//     relationName: "oppositions_`reviewer",
+//   }),
+//   paymentsCreated: many(payments, { relationName: "payments_creator" }),
+// }));

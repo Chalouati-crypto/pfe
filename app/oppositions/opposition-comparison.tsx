@@ -3,15 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useAction } from "next-safe-action/hooks";
 import { reviewOpposition } from "@/server/actions/oppositions";
 import { ArrowRight, Check, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { Article } from "@/types/articles-schema";
 import type { Opposition } from "@/types/oppositions-schema";
+import { useSession } from "next-auth/react";
 
 interface OppositionComparisonProps {
   article: Article;
@@ -25,38 +24,11 @@ export function OppositionComparison({
   onClose,
 }: OppositionComparisonProps) {
   const [reviewNotes, setReviewNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   console.log("this is the article", article);
   article = article[0];
-  const { execute, status } = useAction(reviewOpposition, {
-    onSuccess({ data }) {
-      if (data?.success) {
-        toast.success(data.message || "Opposition reviewed successfully");
-        onClose();
-      } else if (data?.error) {
-        toast.error(data.error);
-      }
-    },
-    onError(error) {
-      toast.error("Failed to review opposition");
-      console.error(error);
-    },
-  });
 
-  const handleApprove = () => {
-    execute({
-      oppositionId: opposition.id,
-      approved: true,
-      reviewNotes,
-    });
-  };
-
-  const handleReject = () => {
-    execute({
-      oppositionId: opposition.id,
-      approved: false,
-      reviewNotes,
-    });
-  };
+  const { data: session } = useSession();
 
   // Helper function to determine if a value has changed
   const hasChanged = (current: any, proposed: any) => {
@@ -71,6 +43,63 @@ export function OppositionComparison({
     if (!services || services.length === 0) return "None";
     return services.map((service) => service.label || service.id).join(", ");
   };
+  console.log("opposition stattus", opposition.status);
+  const handleDecision = async (decision: "approve" | "reject") => {
+    if (isSubmitting) return; // Prevent double-clicks
+
+    setIsSubmitting(true);
+
+    try {
+      // Debug: Log the opposition data
+      console.log("Opposition data:", opposition);
+      console.log(
+        "Opposition ID:",
+        opposition.id,
+        "Type:",
+        typeof opposition.id
+      );
+
+      // Debug: Get opposition info from database
+
+      // Ensure opposition ID is a number
+      const oppositionId = Number(opposition.id);
+
+      if (isNaN(oppositionId)) {
+        throw new Error("Invalid opposition ID");
+      }
+
+      console.log(
+        `Submitting decision for opposition ${oppositionId}: ${decision}`
+      );
+
+      // Call the server action directly with explicit opposition ID
+      const result = await reviewOpposition(
+        oppositionId,
+        decision,
+        reviewNotes.trim()
+      );
+
+      console.log("Server action result:", result);
+
+      if (result.success) {
+        toast.success(result.message);
+        onClose(); // Close the modal/component
+      } else {
+        toast.error(result.message || "Operation failed");
+      }
+    } catch (error) {
+      toast.error("Operation failed");
+      console.error("Server action failed:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Debug: Show opposition status
+  useEffect(() => {
+    console.log("Current opposition:", opposition);
+    console.log("Opposition status:", opposition.status);
+  }, [opposition]);
 
   return (
     <div className="space-y-6">
@@ -79,7 +108,23 @@ export function OppositionComparison({
         <p className="text-sm text-muted-foreground">
           Compare current values with proposed changes for Article #{article.id}
         </p>
+        <div className="mt-2">
+          <Badge variant="secondary">Opposition ID: {opposition.id}</Badge>
+          <Badge variant="outline" className="ml-2">
+            Status: {opposition.status}
+          </Badge>
+        </div>
       </div>
+
+      {/* Show warning if opposition is not pending */}
+      {opposition.status !== "opposition_pending" && (
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="text-yellow-800 text-sm">
+            ⚠️ This opposition is already {opposition.status}. You cannot modify
+            it.
+          </p>
+        </div>
+      )}
 
       {/* Article ID and Opposition ID */}
       <div className="grid grid-cols-2 gap-4">
@@ -103,7 +148,7 @@ export function OppositionComparison({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Current Values */}
         <Card className="border-muted">
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-3 space-y-2">
             <div className="text-center mb-2">
               <h3 className="font-semibold text-lg">Current Values</h3>
             </div>
@@ -135,7 +180,7 @@ export function OppositionComparison({
 
         {/* Proposed Values */}
         <Card className="border-primary">
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-3 space-y-2">
             <div className="text-center mb-2">
               <h3 className="font-semibold text-lg">Proposed Values</h3>
             </div>
@@ -153,9 +198,11 @@ export function OppositionComparison({
                       : ""
                   }`}
                 >
-                  {opposition.proposedSurfaceCouverte
-                    ? `${opposition.proposedSurfaceCouverte} m²`
-                    : "No change"}
+                  {opposition.proposedSurfaceCouverte == 0
+                    ? "<<Non Bati>>"
+                    : opposition.proposedSurfaceCouverte
+                      ? `${opposition.proposedSurfaceCouverte} m²`
+                      : "No change"}
                   {hasChanged(
                     article.surfaceCouverte,
                     opposition.proposedSurfaceCouverte
@@ -229,30 +276,26 @@ export function OppositionComparison({
 
       {/* Action Buttons */}
       <div className="flex justify-end space-x-3 pt-2">
-        <Button
-          variant="outline"
-          onClick={onClose}
-          disabled={status === "executing"}
-        >
+        <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button
           variant="destructive"
-          onClick={handleReject}
-          disabled={status === "executing"}
           className="flex items-center gap-1"
+          onClick={() => handleDecision("reject")}
+          disabled={opposition.status != "opposition_pending" || isSubmitting}
         >
           <X className="h-4 w-4" />
-          Reject Changes
+          {isSubmitting ? "Processing..." : "Reject Changes"}
         </Button>
         <Button
           variant="default"
-          onClick={handleApprove}
-          disabled={status === "executing"}
           className="flex items-center gap-1"
+          onClick={() => handleDecision("approve")}
+          disabled={opposition.status != "opposition_pending" || isSubmitting}
         >
           <Check className="h-4 w-4" />
-          Approve Changes
+          {isSubmitting ? "Processing..." : "Approve Changes"}
         </Button>
       </div>
     </div>

@@ -7,18 +7,19 @@ import OppositionsTable from "./oppositions-table";
 export default async function Oppositions() {
   const oppositions = await getOppositions();
   if (!oppositions) return;
+  console.log("these are the services", oppositions[1].proposedServices);
 
   return (
     <div className="grid gap-12 mt-12">
       <div className="flex items-center justify-between">
         <TypographyH1>Liste des oppositions</TypographyH1>
-        <FormDialog
+        {/* <FormDialog
           big={false}
           trigger="Ajouter une opposition"
           title="Ajouter une nouveau opposition"
         >
           <AddOppositionForm />
-        </FormDialog>
+        </FormDialog> */}
       </div>
       <OppositionsTable oppositions={oppositions} />
     </div>

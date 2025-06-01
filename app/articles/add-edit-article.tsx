@@ -37,6 +37,11 @@ const calculateTax = (
   services: Array<{ id: string; label: string }> | undefined,
   autreService: string | undefined
 ) => {
+  /*
+  
+  
+  */
+
   // Initialize tax
   let tax = 0;
 
@@ -406,7 +411,7 @@ export default function AddEditArticle({
                 </Button>
               )}
 
-            {/* {(activeTab === "4" ||
+            {(activeTab === "4" ||
               (typeDePropriete !== "bati" && activeTab === "3")) && (
               <Button
                 type="submit"
@@ -415,7 +420,7 @@ export default function AddEditArticle({
               >
                 {article ? "Modifier" : "Ajouter"}
               </Button>
-            )} */}
+            )}
           </div>
         </div>
       </form>

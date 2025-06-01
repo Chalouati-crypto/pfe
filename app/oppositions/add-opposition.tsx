@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAction } from "next-safe-action/hooks";
 import * as z from "zod";
 import { toast } from "sonner";
 import {
@@ -19,23 +18,16 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { addOpposition } from "@/server/actions/oppositions";
+import { services } from "@/types/articles-schema";
 
-// Define the services options
-const serviceOptions = [
-  { id: "eau", label: "Eau" },
-  { id: "electricite", label: "Électricité" },
-  { id: "assainissement", label: "Assainissement" },
-  { id: "internet", label: "Internet" },
-  { id: "gaz", label: "Gaz" },
-  // Add more services as needed
-];
+const serviceOptions = services;
 
 // Create a schema for the opposition form
 export const createOppositionSchema = z.object({
   articleId: z.coerce.number().int().positive(),
-  proposedSurfaceCouverte: z.coerce.number().positive().optional(),
+  proposedSurfaceCouverte: z.coerce.number().optional(),
   proposedServices: z
     .array(
       z.object({
@@ -65,20 +57,7 @@ export function AddOppositionForm({
   currentAutreService?: string | null;
   handleClose: () => void;
 }) {
-  const { execute, status } = useAction(addOpposition, {
-    onSuccess({ data }) {
-      if (data?.success) {
-        toast.success("Opposition submitted successfully");
-        handleClose();
-      } else if (data?.error) {
-        toast.error(data.error);
-      }
-    },
-    onError(error) {
-      toast.error("Failed to submit opposition");
-      console.error(error);
-    },
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State to track selected services
   const [selectedServices, setSelectedServices] = useState<string[]>(
@@ -95,25 +74,44 @@ export function AddOppositionForm({
       reason: "",
     },
   });
+  const { errors } = form.formState;
 
-  const onSubmit = (values: OppositionFormData) => {
-    // Transform the selected service IDs into the required format
-    const formattedServices = selectedServices.map((id) => {
-      const service = serviceOptions.find((s) => s.id === id);
-      return {
-        id,
-        label: service?.label,
+  useEffect(() => {
+    console.log("these are the form errors", errors);
+  }, [errors]);
+
+  const onSubmit = async (values: OppositionFormData) => {
+    setIsSubmitting(true);
+    try {
+      // Transform the selected service IDs into the required format
+      const formattedServices = selectedServices.map((id) => {
+        const service = serviceOptions.find((s) => s.id === id);
+        return {
+          id,
+          label: service?.label,
+        };
+      });
+
+      // Update the form values with the formatted services
+      const submissionData = {
+        ...values,
+        proposedServices:
+          formattedServices.length > 0 ? formattedServices : undefined,
       };
-    });
 
-    // Update the form values with the formatted services
-    const submissionData = {
-      ...values,
-      proposedServices:
-        formattedServices.length > 0 ? formattedServices : undefined,
-    };
-
-    execute(submissionData);
+      const result = await addOpposition(submissionData);
+      if (result.success) {
+        toast.success("Opposition submitted successfully");
+        handleClose();
+      } else {
+        toast.error(result.error || "An error occurred");
+      }
+    } catch (error) {
+      toast.error("Failed to submit opposition");
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle service selection changes
@@ -130,7 +128,7 @@ export function AddOppositionForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid gap-6">
+        <div className="grid gap-2">
           <div className="grid gap-4">
             <input type="hidden" name="articleId" value={articleId} />
             <FormItem>
@@ -144,38 +142,40 @@ export function AddOppositionForm({
               </FormDescription>
             </FormItem>
 
-            <FormField
-              name="proposedSurfaceCouverte"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Proposed Surface Couverte (m²)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      step="0.01"
-                      placeholder={
-                        currentSurfaceCouverte?.toString() ||
-                        "Enter new surface value"
-                      }
-                      value={field.value || ""}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value
-                            ? Number.parseFloat(e.target.value)
-                            : undefined
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Current value: {currentSurfaceCouverte || "Not specified"}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {currentSurfaceCouverte > 0 && (
+              <FormField
+                name="proposedSurfaceCouverte"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Proposed Surface Couverte (m²)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        step="0.01"
+                        placeholder={
+                          currentSurfaceCouverte?.toString() ||
+                          "Enter new surface value"
+                        }
+                        value={field.value || ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? Number.parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Current value: {currentSurfaceCouverte || "Not specified"}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="space-y-2">
               <FormLabel>Proposed Services</FormLabel>
@@ -237,7 +237,7 @@ export function AddOppositionForm({
                     <Textarea
                       {...field}
                       placeholder="Please provide a detailed explanation for this opposition"
-                      className="min-h-[100px]"
+                      className="min-h-[50px]"
                     />
                   </FormControl>
                   <FormDescription>
@@ -250,12 +250,10 @@ export function AddOppositionForm({
 
             <Button
               type="submit"
-              className={cn(
-                "w-full",
-                status === "executing" ? "animate-pulse" : ""
-              )}
+              disabled={isSubmitting}
+              className={cn("w-full", isSubmitting ? "animate-pulse" : "")}
             >
-              Submit Opposition
+              {isSubmitting ? "Submitting..." : "Submit Opposition"}
             </Button>
           </div>
         </div>

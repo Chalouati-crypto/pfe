@@ -40,15 +40,16 @@ export const columns = (
     header: "Article",
     cell: ({ row }) => <div>{row.original.articleId}</div>,
   },
-
-  {
-    accessorKey: "proposedSurfaceCouverte",
-    header: "Proposed Surface couverte",
-  },
-
   {
     accessorKey: "proposedServices",
     header: "Proposed Services",
+    cell: ({ row }) => {
+      const services = row.original.proposedServices;
+      // Extract service names and join with commas
+      if (services)
+        return <div>{services.map((service) => service.label).join(", ")}</div>;
+      else return <div>-</div>;
+    },
   },
 
   {
