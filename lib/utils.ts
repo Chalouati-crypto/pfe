@@ -1,6 +1,12 @@
-import { articlesSchema } from "@/types/articles-schema";
 import bcrypt from "bcryptjs";
 import { clsx, type ClassValue } from "clsx";
+import {
+  FileStack,
+  LayoutDashboard,
+  School,
+  StopCircleIcon,
+  Users,
+} from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { z } from "zod";
 
@@ -197,4 +203,57 @@ export const getDensityPrice = (density: string) => {
     default:
       return "N/A";
   }
+};
+export const getNavItems = (userRole: string) => {
+  // Base items available to all roles
+  const allItems = [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: LayoutDashboard,
+    },
+  ];
+
+  // Role-specific items
+  const roleItems = [
+    {
+      roles: ["agent"],
+      item: {
+        title: "Articles",
+        url: "/articles",
+        icon: School,
+      },
+    },
+    {
+      roles: ["percepteur"],
+      item: {
+        title: "Paiments",
+        url: "/payments",
+        icon: FileStack,
+      },
+    },
+    {
+      roles: ["membre"],
+      item: {
+        title: "Oppositions",
+        url: "/oppositions",
+        icon: StopCircleIcon,
+      },
+    },
+    {
+      roles: ["admin"],
+      item: {
+        title: "Users",
+        url: "/users",
+        icon: Users,
+      },
+    },
+  ];
+
+  // Filter role-specific items
+  const filteredItems = roleItems
+    .filter(({ roles }) => roles.includes(userRole))
+    .map(({ item }) => item);
+
+  return [...allItems, ...filteredItems];
 };
